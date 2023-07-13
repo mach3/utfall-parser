@@ -3,6 +3,7 @@ const fs = require('fs');
 const {
   download,
   parse,
+  find,
   findByAddress,
   findByComponents,
   findByZipcode
@@ -43,6 +44,11 @@ function main () {
   // find by components
   const findByComponentsResult = findByComponents(['東京都', '港区', '芝公園'], data);
   console.log('findByComponentsResult: ', findByComponentsResult);
+  divider();
+
+  // find by query
+  const findResult = find('東京都千代田区千代田', data);
+  console.log('findResult:', findResult);
 }
 
 main();

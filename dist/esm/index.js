@@ -8,7 +8,7 @@ const ZEN_NUM_MAP = '０１２３４５６７８９';
  * @param {string} url
  * @returns {string}
  */
-export function download(destDir, url = UTF_ALL_URL) {
+export function download(destDir = './', url = UTF_ALL_URL) {
     const destPath = path.join(destDir, path.basename(url));
     execSync(`curl -o ${destPath} ${url}`);
     return destPath;
@@ -113,16 +113,26 @@ export function parse(csvString) {
         .map(json => JSON.parse(json));
 }
 /**
+ * 正しい郵便番号文字列かどうかをテストする
+ * @param {string} value
+ * @returns {string | null}
+ */
+export function parseZipcode(value) {
+    const zipcode = value
+        .replace(/[０-９]/g, (s) => ZEN_NUM_MAP.indexOf(s).toString())
+        .replace(/[^\d]/g, '');
+    const isLikeZipcode = zipcode.length > 2 && zipcode.length < 8 && (value.length - zipcode.length) < zipcode.length;
+    return isLikeZipcode ? zipcode : null;
+}
+/**
  * 住所データから郵便番号で住所を検索する
  * @param {string} zipcodeString
  * @param {AddressItem[]} data
  * @returns {AddressItem[] | Error}
  */
 export function findByZipcode(zipcodeString, data) {
-    const zipcode = zipcodeString
-        .replace(/[０-９]/g, (s) => ZEN_NUM_MAP.indexOf(s).toString())
-        .replace(/[^\d]/g, '');
-    if (zipcode.length === 0) {
+    const zipcode = parseZipcode(zipcodeString);
+    if (zipcode === null) {
         return new Error('Invalid Zipcode');
     }
     const pattern = new RegExp(`^${zipcode}`);
@@ -198,4 +208,39 @@ export function findByComponents(components, data, isOr = false) {
         }
         return itsAddress.includes(components[0]);
     });
+}
+function getType(obj) {
+    return Object.prototype.toString.call(obj).slice(8, -1);
+}
+/**
+ * 任意の型のクエリをわたして住所を検索する
+ * @param {string | string[]} query
+ * @param {AddressItem[]} data
+ * @param {FindOptions} options
+ * @returns
+ */
+export function find(query, data, options = {}) {
+    const value = getType(query) === 'Array'
+        ? query
+        : (() => {
+            const values = query.split(/\s/);
+            return values.length > 1 ? values : query;
+        })();
+    // components ?
+    if (getType(value) === 'Array') {
+        if (value.every(it => (getType(it) === 'String'))) {
+            return findByComponents(value, data, options.isOr);
+        }
+        return new Error('Invalid Array');
+    }
+    // zipcode ?
+    if (getType(value) === 'String') {
+        const zipcode = parseZipcode(value);
+        if (zipcode !== null) {
+            return findByZipcode(value, data);
+        }
+        // address !
+        return findByAddress(value, data, options.sort);
+    }
+    return new Error('Invalid Query');
 }

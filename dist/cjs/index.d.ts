@@ -4,7 +4,7 @@
  * @param {string} url
  * @returns {string}
  */
-export declare function download(destDir: string, url?: string): string;
+export declare function download(destDir?: string, url?: string): string;
 /**
  * 住所データの型
  */
@@ -21,6 +21,12 @@ interface AddressItem {
  * @returns {AddressItem[]}
  */
 export declare function parse(csvString: string): AddressItem[];
+/**
+ * 正しい郵便番号文字列かどうかをテストする
+ * @param {string} value
+ * @returns {string | null}
+ */
+export declare function parseZipcode(value: string): string | null;
 /**
  * 住所データから郵便番号で住所を検索する
  * @param {string} zipcodeString
@@ -52,4 +58,16 @@ export declare function findByAddress(address: string, data: AddressItem[], sort
  * @returns {AddressItem[] | Error}
  */
 export declare function findByComponents(components: string[], data: AddressItem[], isOr?: boolean): AddressItem[] | Error;
+interface FindOptions {
+    sort?: boolean;
+    isOr?: boolean;
+}
+/**
+ * 任意の型のクエリをわたして住所を検索する
+ * @param {string | string[]} query
+ * @param {AddressItem[]} data
+ * @param {FindOptions} options
+ * @returns
+ */
+export declare function find(query: string | string[], data: AddressItem[], options?: FindOptions): AddressItem[] | Error;
 export {};

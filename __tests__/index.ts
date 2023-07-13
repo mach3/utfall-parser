@@ -1,4 +1,4 @@
-import { download, findByAddress, findByComponents, findByZipcode, parse, similaritySort } from '../src';
+import { download, find, findByAddress, findByComponents, findByZipcode, parse, parseZipcode, similaritySort } from '../src';
 import fs from 'fs';
 import path from 'path';
 
@@ -44,6 +44,15 @@ test('doesnt have dupulicated data', () => {
   const tmp: string[] = DATA.map((it: any) => JSON.stringify(it));
   const uniq = [...new Set(tmp)];
   expect(uniq.length).toBe(DATA.length);
+});
+
+// 正しい郵便番号が判別できること
+test('test whether value is like zipcode', () => {
+  expect(parseZipcode('１２３４５６７')).toBe('1234567');
+  expect(parseZipcode('12')).toBe(null);
+  expect(parseZipcode('12345678')).toBe(null);
+  expect(parseZipcode('123abcd')).toBe(null);
+  expect(parseZipcode('1234abc')).toBe('1234');
 });
 
 // 郵便番号を指定してデータを取得できること
@@ -98,6 +107,28 @@ test('find by components', () => {
   expect(r[3].length).toBeGreaterThan(0);
   expect(r[4].length).toBe(0);
   expect(r[5].length).toBeGreaterThan(0);
+});
+
+// 任意の値をわたしてデータを取得できること
+test('find by query', () => {
+  const r: any[] = [
+    find('123', DATA),
+    find('1000001', DATA),
+    find('東京都　芝公園', DATA),
+    find('東京都　芝公園', DATA, { isOr: true }),
+    find(['東京都', '芝公園'], DATA, { isOr: true }),
+    find('東京都千代田区千代田', DATA),
+    find('東京都千代田区千代田', DATA, { sort: false })
+  ];
+
+  expect(r[0].length).toBeGreaterThan(1);
+  expect(r[1][0].address.includes('千代田区千代田')).toBe(true);
+  expect(r[2].length).toBeGreaterThan(0);
+  expect(r[2][0].zipcode).toBe('1050011');
+  expect(r[3].length).toBeGreaterThan(r[2].length);
+  expect(r[4].length).toBe(r[3].length);
+  expect(r[5][0].zipcode).toBe('1000001');
+  expect(r[6][0].zipcode).toBe('1000000');
 });
 
 // 2023/2/26現在、「一つの郵便番号で二以上の町域を表す場合の表示」が 1 だが複数行に渡るケースであり、
