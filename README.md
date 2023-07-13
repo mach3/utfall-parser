@@ -63,7 +63,7 @@ findByAddress(
 ): AddressItem[] | Error
 ```
 
-指定された住所文字列と部分一致する住所レコードを検索します。
+指定された住所文字列と部分一致する住所レコードを検索します。  
 `sort` が `true` の場合は、類似度が高い順にソートされた配列を返します。（初期値は `true`）
 
 ### `findByComponents`
@@ -78,6 +78,22 @@ findByComponents(
 
 指定された住所要素の配列に一致する住所レコードを検索します。  
 `isOr` が `true` の場合は、OR検索を行います。（初期値は `false` でAND検索）
+
+### `find`
+
+```typescript
+find(
+  query: string | string[],
+  data: AddressItem[],
+  options: {
+    isOr?: boolean
+    sort?: boolean
+  } = {}
+): AddressItem[] | Error
+```
+
+任意の型のクエリを指定して住所レコードを検索します。  
+郵便番号・住所・住所要素（配列）が指定可能です。
 
 ## Example
 
@@ -96,4 +112,7 @@ const addressResult = findByAddress('東京都千代田区千代田', data);
 
 // データから住所要素で検索
 const componentsResult = findByComponents(['東京都', '千代田区', '千代田'], data);
+
+// データから任意の型のクエリで検索
+const queryResult = find('東京都市代田区千代田', data);
 ```
