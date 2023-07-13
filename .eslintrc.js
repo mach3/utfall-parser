@@ -3,8 +3,15 @@ module.exports = {
     "browser": true,
     "es2021": true
   },
-  "extends": "standard-with-typescript",
+  "extends": "standard",
   "overrides": [
+    {
+      "files": ["*.ts"],
+      "extends": "standard-with-typescript",
+      "rules": {
+        '@typescript-eslint/semi': ['error', 'always']
+      }
+    }
   ],
   "parserOptions": {
     "ecmaVersion": "latest",
@@ -12,7 +19,6 @@ module.exports = {
     "project": "./tsconfig.json"
   },
   "rules": {
-    semi: ['error', 'always'],
-    '@typescript-eslint/semi': ['error', 'always']
+    semi: ['error', 'always']
   }
 }

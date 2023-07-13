@@ -1,3 +1,5 @@
 node_modules
 __tests__/*.csv
 /coverage
+examples/*.csv
+examples/*.json
