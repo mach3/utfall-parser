@@ -10,7 +10,7 @@ const ZEN_NUM_MAP = '０１２３４５６７８９';
  * @param {string} url
  * @returns {string}
  */
-export function download (destDir: string, url: string = UTF_ALL_URL): string {
+export function download (destDir: string = './', url: string = UTF_ALL_URL): string {
   const destPath = path.join(destDir, path.basename(url));
   execSync(`curl -o ${destPath} ${url}`);
   return destPath;
