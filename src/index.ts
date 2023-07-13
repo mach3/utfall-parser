@@ -140,16 +140,27 @@ export function parse (csvString: string): AddressItem[] {
 }
 
 /**
+ * 正しい郵便番号文字列かどうかをテストする
+ * @param {string} value
+ * @returns {string | null}
+ */
+export function parseZipcode (value: string): string | null {
+  const zipcode = value
+    .replace(/[０-９]/g, (s) => ZEN_NUM_MAP.indexOf(s).toString())
+    .replace(/[^\d]/g, '');
+  const isLikeZipcode = zipcode.length > 2 && zipcode.length < 8 && (value.length - zipcode.length) < zipcode.length;
+  return isLikeZipcode ? zipcode : null;
+}
+
+/**
  * 住所データから郵便番号で住所を検索する
  * @param {string} zipcodeString
  * @param {AddressItem[]} data
  * @returns {AddressItem[] | Error}
  */
 export function findByZipcode (zipcodeString: string, data: AddressItem[]): AddressItem[] | Error {
-  const zipcode = zipcodeString
-    .replace(/[０-９]/g, (s) => ZEN_NUM_MAP.indexOf(s).toString())
-    .replace(/[^\d]/g, '');
-  if (zipcode.length === 0) {
+  const zipcode = parseZipcode(zipcodeString);
+  if (zipcode === null) {
     return new Error('Invalid Zipcode');
   }
   const pattern = new RegExp(`^${zipcode}`);
@@ -229,4 +240,48 @@ export function findByComponents (components: string[], data: AddressItem[], isO
     }
     return itsAddress.includes(components[0]);
   });
+}
+
+interface FindOptions {
+  sort?: boolean
+  isOr?: boolean
+}
+
+function getType (obj: any): string {
+  return Object.prototype.toString.call(obj).slice(8, -1);
+}
+
+/**
+ * 任意の型のクエリをわたして住所を検索する
+ * @param {string | string[]} query
+ * @param {AddressItem[]} data
+ * @param {FindOptions} options
+ * @returns
+ */
+export function find (query: string | string[], data: AddressItem[], options: FindOptions = {}): AddressItem[] | Error {
+  const value = getType(query) === 'Array'
+    ? query
+    : (() => {
+        const values = (query as string).split(/\s/);
+        return values.length > 1 ? values : query;
+      })();
+
+  // components ?
+  if (getType(value) === 'Array') {
+    if ((value as any[]).every(it => (getType(it) === 'String'))) {
+      return findByComponents(value as string[], data, options.isOr);
+    }
+    return new Error('Invalid Array');
+  }
+  // zipcode ?
+  if (getType(value) === 'String') {
+    const zipcode = parseZipcode(value as string);
+    if (zipcode !== null) {
+      return findByZipcode(value as string, data);
+    }
+    // address !
+    return findByAddress(value as string, data, options.sort);
+  }
+
+  return new Error('Invalid Query');
 }
