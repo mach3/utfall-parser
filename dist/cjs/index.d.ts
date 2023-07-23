@@ -16,6 +16,12 @@ interface AddressItem {
     notes?: string;
 }
 /**
+ * 住所文字列から余計な文字を削除する
+ * @param {string} addressString
+ * @returns {string}
+ */
+export declare function cleanAddress(addressString: string): string;
+/**
  * CSVをパースして住所データを返す
  * @param {string} csvString
  * @returns {AddressItem[]}

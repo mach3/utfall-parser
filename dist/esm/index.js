@@ -18,7 +18,10 @@ export function download(destDir = './', url = UTF_ALL_URL) {
  * @param {string} addressString
  * @returns {string}
  */
-function cleanAddress(addressString) {
+export function cleanAddress(addressString) {
+    if (/(くる|ない)場合/.test(addressString)) {
+        return '';
+    }
     return addressString.replace(/([^^])一円/, '$1')
         .replace(/（高層棟）/, '')
         .replace(/（(.+?)除く）/, '')
@@ -57,16 +60,21 @@ function parseBrackets(addressString) {
  */
 function parseAddress(addressString) {
     const isSingleStreet = (content) => {
-        return !/[、～・]/.test(content);
+        return !/[、〜・]/.test(content);
+    };
+    const isMultipleAddress = (content) => {
+        return !/[（）]/.test(content) && /[、〜]/.test(content);
     };
     const address = cleanAddress(addressString);
-    if (/(くる|ない)場合/.test(address)) {
-        return {};
-    }
     const m = address.match(/(.+)（(.+?)）/);
     if (m !== null) {
         const [, prefix, content] = m;
-        if (isSingleStreet(content)) {
+        if (isMultipleAddress(prefix)) {
+            return {
+                notes: address
+            };
+        }
+        else if (isSingleStreet(content)) {
             return {
                 address: `${prefix}${content}`
             };
@@ -78,6 +86,11 @@ function parseAddress(addressString) {
                 notes
             };
         }
+    }
+    if (isMultipleAddress(address)) {
+        return {
+            notes: address
+        };
     }
     return {
         address

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.find = exports.findByComponents = exports.findByAddress = exports.similaritySort = exports.findByZipcode = exports.parseZipcode = exports.parse = exports.download = void 0;
+exports.find = exports.findByComponents = exports.findByAddress = exports.similaritySort = exports.findByZipcode = exports.parseZipcode = exports.parse = exports.cleanAddress = exports.download = void 0;
 const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
 const UTF_ALL_URL = 'https://www.post.japanpost.jp/zipcode/utf_all.csv';
@@ -26,6 +26,9 @@ exports.download = download;
  * @returns {string}
  */
 function cleanAddress(addressString) {
+    if (/(くる|ない)場合/.test(addressString)) {
+        return '';
+    }
     return addressString.replace(/([^^])一円/, '$1')
         .replace(/（高層棟）/, '')
         .replace(/（(.+?)除く）/, '')
@@ -40,6 +43,7 @@ function cleanAddress(addressString) {
         .replace(/甲、乙/g, '')
         .replace(/^([^（]+?)[０-９]+.+(、|～).+$/, '$1');
 }
+exports.cleanAddress = cleanAddress;
 /**
  * 住所から括弧内の文字列を取り除き、括弧内の文字列と一緒に返す
  * @param {string} addressString
@@ -64,16 +68,21 @@ function parseBrackets(addressString) {
  */
 function parseAddress(addressString) {
     const isSingleStreet = (content) => {
-        return !/[、～・]/.test(content);
+        return !/[、〜・]/.test(content);
+    };
+    const isMultipleAddress = (content) => {
+        return !/[（）]/.test(content) && /[、〜]/.test(content);
     };
     const address = cleanAddress(addressString);
-    if (/(くる|ない)場合/.test(address)) {
-        return {};
-    }
     const m = address.match(/(.+)（(.+?)）/);
     if (m !== null) {
         const [, prefix, content] = m;
-        if (isSingleStreet(content)) {
+        if (isMultipleAddress(prefix)) {
+            return {
+                notes: address
+            };
+        }
+        else if (isSingleStreet(content)) {
             return {
                 address: `${prefix}${content}`
             };
@@ -85,6 +94,11 @@ function parseAddress(addressString) {
                 notes
             };
         }
+    }
+    if (isMultipleAddress(address)) {
+        return {
+            notes: address
+        };
     }
     return {
         address

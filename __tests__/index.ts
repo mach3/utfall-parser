@@ -1,4 +1,4 @@
-import { download, find, findByAddress, findByComponents, findByZipcode, parse, parseZipcode, similaritySort } from '../src';
+import { cleanAddress, download, find, findByAddress, findByComponents, findByZipcode, parse, parseZipcode, similaritySort } from '../src';
 import fs from 'fs';
 import path from 'path';
 
@@ -9,6 +9,13 @@ const DATA = ((): any => {
     download(__dirname);
   }
   return parse(fs.readFileSync(CSV_PATH, 'utf-8'));
+})();
+
+const RAW_DATA = ((): any => {
+  return fs.readFileSync(CSV_PATH, 'utf-8')
+    .split('\n')
+    .filter(it => it)
+    .map((it: string) => (it.split(',')));
 })();
 
 function getType (obj: any): string {
@@ -137,6 +144,33 @@ test('find by query', () => {
 test('Edge Case : 9218046', () => {
   const r = findByZipcode('9218046', DATA) as any[];
   expect(r.length).toBe(2);
+});
+
+// 括弧 "（）" の外で "～" および "、" が住所文字列に含まれている場合は notes に逃がす対応をする
+test('Edge Case : 7900054, 7910056', () => {
+  RAW_DATA
+    .filter((row: string[]) => {
+      const address = cleanAddress(row[8]);
+      const m = address.match(/(.+)（(.+?)）/);
+      if (m !== null) {
+        return /[、〜]/.test(m[1]);
+      }
+      if (!address.includes('（')) {
+        return /[、〜]/.test(address);
+      }
+      return false;
+    }).map((row: string[]) => {
+      return {
+        zipcode: row[2].replace(/"/g, ''),
+        street: row[8].replace(/"/g, '')
+      };
+    }).forEach((row: any) => {
+      const r = findByZipcode(row.zipcode, DATA) as any[];
+      expect(r.some(it => it.notes === row.street)).toBe(true);
+    });
+
+  expect(findByAddress('、', DATA)).toStrictEqual([]);
+  expect(findByAddress('〜', DATA)).toStrictEqual([]);
 });
 
 // 類似度でソート
