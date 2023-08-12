@@ -5,6 +5,10 @@ import path from 'path';
 const DATA_DIR = path.join(__dirname, 'data');
 const CSV_PATH = path.join(DATA_DIR, 'utf_all.csv');
 
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR);
+}
+
 const DATA = ((): any => {
   if (!fs.existsSync(CSV_PATH)) {
     download(DATA_DIR);
