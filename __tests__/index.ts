@@ -2,11 +2,12 @@ import { cleanAddress, download, find, findByAddress, findByComponents, findByZi
 import fs from 'fs';
 import path from 'path';
 
-const CSV_PATH = path.join(__dirname, 'utf_all.csv');
+const DATA_DIR = path.join(__dirname, 'data');
+const CSV_PATH = path.join(DATA_DIR, 'utf_all.csv');
 
 const DATA = ((): any => {
   if (!fs.existsSync(CSV_PATH)) {
-    download(__dirname);
+    download(DATA_DIR);
   }
   return parse(fs.readFileSync(CSV_PATH, 'utf-8'));
 })();
@@ -24,7 +25,9 @@ function getType (obj: any): string {
 
 // ダウンロードしたファイルが存在すること
 test('downloaded file exists', () => {
-  fs.existsSync(path.join(__dirname, 'utf_all.csv'));
+  expect(
+    fs.existsSync(CSV_PATH)
+  ).toBe(true);
 });
 
 // ダウンロードしたファイルをパースできること

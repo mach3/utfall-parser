@@ -1,7 +1,8 @@
 import { execSync } from 'child_process';
 import path from 'path';
 
-const UTF_ALL_URL = 'https://www.post.japanpost.jp/zipcode/utf_all.csv';
+// const UTF_ALL_URL = 'https://www.post.japanpost.jp/zipcode/utf_all.csv';
+const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_all.zip';
 const ZEN_NUM_MAP = '０１２３４５６７８９';
 
 /**
@@ -10,9 +11,11 @@ const ZEN_NUM_MAP = '０１２３４５６７８９';
  * @param {string} url
  * @returns {string}
  */
-export function download (destDir: string = './', url: string = UTF_ALL_URL): string {
-  const destPath = path.join(destDir, path.basename(url));
-  execSync(`curl -o ${destPath} ${url}`);
+export function download (destDir: string = './', url: string = UTF_ALL_ZIP_URL): string {
+  const destZipPath = path.join(destDir, path.basename(url));
+  const destPath = destZipPath.replace(path.extname(destZipPath), '.csv');
+  execSync(`curl -o ${destZipPath} ${url}`);
+  execSync(`unzip -o ${destZipPath} -d ${destDir}`);
   return destPath;
 }
 
