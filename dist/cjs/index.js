@@ -6,7 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.find = exports.findByComponents = exports.findByAddress = exports.similaritySort = exports.findByZipcode = exports.parseZipcode = exports.parse = exports.cleanAddress = exports.download = void 0;
 const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
-const UTF_ALL_URL = 'https://www.post.japanpost.jp/zipcode/utf_all.csv';
+// const UTF_ALL_URL = 'https://www.post.japanpost.jp/zipcode/utf_all.csv';
+const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_all.zip';
 const ZEN_NUM_MAP = '０１２３４５６７８９';
 /**
  * ファイルをダウンロードしてパスを返す
@@ -14,9 +15,11 @@ const ZEN_NUM_MAP = '０１２３４５６７８９';
  * @param {string} url
  * @returns {string}
  */
-function download(destDir = './', url = UTF_ALL_URL) {
-    const destPath = path_1.default.join(destDir, path_1.default.basename(url));
-    (0, child_process_1.execSync)(`curl -o ${destPath} ${url}`);
+function download(destDir = './', url = UTF_ALL_ZIP_URL) {
+    const destZipPath = path_1.default.join(destDir, path_1.default.basename(url));
+    const destPath = destZipPath.replace(path_1.default.extname(destZipPath), '.csv');
+    (0, child_process_1.execSync)(`curl -o ${destZipPath} ${url}`);
+    (0, child_process_1.execSync)(`unzip -o ${destZipPath} -d ${destDir}`);
     return destPath;
 }
 exports.download = download;
