@@ -85,7 +85,7 @@ function parseAddress(addressString) {
         else {
             const [street, notes] = parseBrackets(address);
             return {
-                address: `${prefix}${street}`,
+                address: street,
                 notes
             };
         }
@@ -120,7 +120,7 @@ export function parse(csvString) {
         data.push({
             zipcode,
             pref,
-            components,
+            components: components.filter(value => value),
             address: components.slice(1).join(''),
             notes: parsedAddress.notes
         });

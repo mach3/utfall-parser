@@ -187,3 +187,17 @@ test('sort by similarity', async () => {
   expect(r[0].zipcode).toBe('5300057');
   expect(r[3].zipcode).toBe('1140000');
 });
+
+// BugFix: 住所のprefixがmultipleではなく、かつ括弧内がmultipleである場合の出力が正しくない
+// 例: 1050022: 東京都港区海岸海岸 になっていて street が重複している
+test('BugFix: 1050022', () => {
+  const r = findByZipcode('1050022', DATA) as any[];
+  expect(r.length).toBe(1);
+  expect(r[0].address).toBe('港区海岸');
+});
+
+// BugFix: 空文字のコンポーネントが観測されたので除去する
+test('BugFix: empty component', () => {
+  const r = DATA.filter((it: any) => it.components.includes(''));
+  expect(r.length).toBe(0);
+});
