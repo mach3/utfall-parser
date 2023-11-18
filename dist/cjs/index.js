@@ -7,7 +7,8 @@ exports.find = exports.findByComponents = exports.findByAddress = exports.simila
 const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
 // const UTF_ALL_URL = 'https://www.post.japanpost.jp/zipcode/utf_all.csv';
-const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_all.zip';
+// const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_all.zip';
+const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_ken_all.zip';
 const ZEN_NUM_MAP = '０１２３４５６７８９';
 /**
  * ファイルをダウンロードしてパスを返す
@@ -17,9 +18,9 @@ const ZEN_NUM_MAP = '０１２３４５６７８９';
  */
 function download(destDir = './', url = UTF_ALL_ZIP_URL) {
     const destZipPath = path_1.default.join(destDir, path_1.default.basename(url));
-    const destPath = destZipPath.replace(path_1.default.extname(destZipPath), '.csv');
     (0, child_process_1.execSync)(`curl -o ${destZipPath} ${url}`);
     (0, child_process_1.execSync)(`unzip -o ${destZipPath} -d ${destDir}`);
+    const destPath = (0, child_process_1.execSync)(`find ${destDir} -name '*.csv' | head -n 1`).toString().replace(/\s/g, '');
     return destPath;
 }
 exports.download = download;
@@ -71,6 +72,9 @@ function parseBrackets(addressString) {
  */
 function parseAddress(addressString) {
     const isSingleStreet = (content) => {
+        if (/^[ア-ン]+?$/.test(content)) {
+            return false;
+        }
         return !/[、〜・]/.test(content);
     };
     const isMultipleAddress = (content) => {
