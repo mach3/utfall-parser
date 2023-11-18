@@ -1,7 +1,8 @@
 import { execSync } from 'child_process';
 import path from 'path';
 // const UTF_ALL_URL = 'https://www.post.japanpost.jp/zipcode/utf_all.csv';
-const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_all.zip';
+// const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_all.zip';
+const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_ken_all.zip';
 const ZEN_NUM_MAP = '０１２３４５６７８９';
 /**
  * ファイルをダウンロードしてパスを返す
@@ -11,9 +12,9 @@ const ZEN_NUM_MAP = '０１２３４５６７８９';
  */
 export function download(destDir = './', url = UTF_ALL_ZIP_URL) {
     const destZipPath = path.join(destDir, path.basename(url));
-    const destPath = destZipPath.replace(path.extname(destZipPath), '.csv');
     execSync(`curl -o ${destZipPath} ${url}`);
     execSync(`unzip -o ${destZipPath} -d ${destDir}`);
+    const destPath = execSync(`find ${destDir} -name '*.csv' | head -n 1`).toString().replace(/\s/g, '');
     return destPath;
 }
 /**
@@ -63,6 +64,9 @@ function parseBrackets(addressString) {
  */
 function parseAddress(addressString) {
     const isSingleStreet = (content) => {
+        if (/^[ア-ン]+?$/.test(content)) {
+            return false;
+        }
         return !/[、〜・]/.test(content);
     };
     const isMultipleAddress = (content) => {
