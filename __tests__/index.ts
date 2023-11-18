@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 const DATA_DIR = path.join(__dirname, 'data');
-const CSV_PATH = path.join(DATA_DIR, 'utf_all.csv');
+const CSV_PATH = path.join(DATA_DIR, 'utf_ken_all/utf_ken_all.csv');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR);
@@ -200,4 +200,28 @@ test('BugFix: 1050022', () => {
 test('BugFix: empty component', () => {
   const r = DATA.filter((it: any) => it.components.includes(''));
   expect(r.length).toBe(0);
+});
+
+// Edge Case : 括弧書きで読みがなや別名などが記載されている場合があるので、それを notes に逃がす
+test('Edge Case : 4740057', () => {
+  // 対象の住所のリスト
+  const target = RAW_DATA.filter((row: string[]) => {
+    return /（[ア-ン]+?）/.test(row[8]);
+  }).map((row: string[]) => {
+    return [
+      row[2].replace(/"/g, ''),
+      row[8].replace(/"/g, '')
+    ];
+  });
+
+  // 住所がカタカナで終わってなければOKとする
+  const result = target.filter((row: string[]) => {
+    const res = (findByZipcode(row[0], DATA) as any[])
+      .filter((it: any) => {
+        return /[ア-ン]+$/.test(it.address);
+      });
+    return res.length > 0;
+  });
+
+  expect(result.length).toBe(0);
 });
