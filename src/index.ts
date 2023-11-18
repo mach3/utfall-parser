@@ -80,6 +80,9 @@ function parseBrackets (addressString: string): [string, string?] {
  */
 function parseAddress (addressString: string): { address?: string, notes?: string } {
   const isSingleStreet = (content: string): boolean => {
+    if (/^[ア-ン]+?$/.test(content)) {
+      return false;
+    }
     return !/[、〜・]/.test(content);
   };
 
