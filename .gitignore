@@ -3,4 +3,6 @@ __tests__/data/*.*
 __tests__/data/*/*.*
 /coverage
 examples/*.csv
+examples/*.zip
 examples/*.json
+examples/**/*.csv

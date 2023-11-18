@@ -12,12 +12,8 @@ const {
 const divider = () => console.log(Array.from({ length: 50 }).map(() => '─').join(''));
 
 function main () {
-  // download utf_all.csv
-  const csvFilePath = path.join(__dirname, 'utf_all.csv');
-  if (!fs.existsSync(csvFilePath)) {
-    download(__dirname);
-  }
-  console.log(`downloaded: ${csvFilePath}`);
+  // download utf_ken_all
+  const csvFilePath = download(__dirname);
   divider();
 
   // parse csv
