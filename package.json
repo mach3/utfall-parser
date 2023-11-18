@@ -13,7 +13,7 @@
     "lint": "eslint --ext .js,.ts .",
     "typecheck": "tsc --noEmit",
     "test": "jest --coverage",
-    "test:clean": "rimraf coverage && rimraf ./__tests__/data/*.*",
+    "test:clean": "rimraf coverage && rimraf ./__tests__/data/*.* && rimraf ./__tests__/data/*/*.*",
     "example": "node examples/index.js"
   },
   "author": "mach3",
