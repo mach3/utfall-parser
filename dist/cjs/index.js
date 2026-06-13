@@ -3,7 +3,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.find = exports.findByComponents = exports.findByAddress = exports.similaritySort = exports.findByZipcode = exports.parseZipcode = exports.parse = exports.cleanAddress = exports.download = void 0;
+exports.download = download;
+exports.cleanAddress = cleanAddress;
+exports.parse = parse;
+exports.parseZipcode = parseZipcode;
+exports.findByZipcode = findByZipcode;
+exports.similaritySort = similaritySort;
+exports.findByAddress = findByAddress;
+exports.findByComponents = findByComponents;
+exports.find = find;
 const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
 // const UTF_ALL_URL = 'https://www.post.japanpost.jp/zipcode/utf_all.csv';
@@ -23,7 +31,6 @@ function download(destDir = './', url = UTF_ALL_ZIP_URL) {
     const destPath = (0, child_process_1.execSync)(`find ${destDir} -name '*.csv' | head -n 1`).toString().replace(/\s/g, '');
     return destPath;
 }
-exports.download = download;
 /**
  * 住所文字列から余計な文字を削除する
  * @param {string} addressString
@@ -47,7 +54,6 @@ function cleanAddress(addressString) {
         .replace(/甲、乙/g, '')
         .replace(/^([^（]+?)[０-９]+.+(、|～).+$/, '$1');
 }
-exports.cleanAddress = cleanAddress;
 /**
  * 住所から括弧内の文字列を取り除き、括弧内の文字列と一緒に返す
  * @param {string} addressString
@@ -140,7 +146,6 @@ function parse(csvString) {
     return Array.from(new Set(data.map(it => JSON.stringify(it))))
         .map(json => JSON.parse(json));
 }
-exports.parse = parse;
 /**
  * 正しい郵便番号文字列かどうかをテストする
  * @param {string} value
@@ -153,7 +158,6 @@ function parseZipcode(value) {
     const isLikeZipcode = zipcode.length > 2 && zipcode.length < 8 && (value.length - zipcode.length) < zipcode.length;
     return isLikeZipcode ? zipcode : null;
 }
-exports.parseZipcode = parseZipcode;
 /**
  * 住所データから郵便番号で住所を検索する
  * @param {string} zipcodeString
@@ -168,7 +172,6 @@ function findByZipcode(zipcodeString, data) {
     const pattern = new RegExp(`^${zipcode}`);
     return data.filter((item) => pattern.test(item.zipcode));
 }
-exports.findByZipcode = findByZipcode;
 /**
  * 類似度が高い順にソートする
  * 類似度が同じ場合は文字数が少ない順にソートする
@@ -198,7 +201,6 @@ function similaritySort(kneedle, data) {
     });
     return result;
 }
-exports.similaritySort = similaritySort;
 /**
  * 住所から住所を検索する
  * @param {string} address
@@ -219,7 +221,6 @@ function findByAddress(address, data, sort = true) {
     });
     return sort ? similaritySort(address, result) : result;
 }
-exports.findByAddress = findByAddress;
 /**
  * 住所の部品からAND/OR検索する
  * @param {string[]} components
@@ -242,7 +243,6 @@ function findByComponents(components, data, isOr = false) {
         return itsAddress.includes(components[0]);
     });
 }
-exports.findByComponents = findByComponents;
 function getType(obj) {
     return Object.prototype.toString.call(obj).slice(8, -1);
 }
@@ -278,4 +278,3 @@ function find(query, data, options = {}) {
     }
     return new Error('Invalid Query');
 }
-exports.find = find;

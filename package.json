@@ -5,8 +5,9 @@
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
+  "packageManager": "pnpm@11.3.0",
   "scripts": {
-    "build": "npm run build:clean && npm run build:cjs && npm run build:esm",
+    "build": "pnpm run build:clean && pnpm run build:cjs && pnpm run build:esm",
     "build:clean": "rimraf dist",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:esm": "tsc -p tsconfig.esm.json",
@@ -20,6 +21,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.5.2",
+    "@types/node": "^25.9.3",
     "@typescript-eslint/eslint-plugin": "^5.60.1",
     "eslint": "^8.44.0",
     "eslint-config-standard": "^17.1.0",
