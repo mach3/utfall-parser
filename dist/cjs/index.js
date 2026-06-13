@@ -12,8 +12,8 @@ exports.similaritySort = similaritySort;
 exports.findByAddress = findByAddress;
 exports.findByComponents = findByComponents;
 exports.find = find;
-const child_process_1 = require("child_process");
-const path_1 = __importDefault(require("path"));
+const node_child_process_1 = require("node:child_process");
+const node_path_1 = __importDefault(require("node:path"));
 const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/service/search/zipcode/download/utf/zip/utf_ken_all.zip';
 const ZEN_NUM_MAP = '０１２３４５６７８９';
 /**
@@ -23,10 +23,10 @@ const ZEN_NUM_MAP = '０１２３４５６７８９';
  * @returns {string}
  */
 function download(destDir = './', url = UTF_ALL_ZIP_URL) {
-    const destZipPath = path_1.default.join(destDir, path_1.default.basename(url));
-    (0, child_process_1.execSync)(`curl -o ${destZipPath} ${url}`);
-    (0, child_process_1.execSync)(`unzip -o ${destZipPath} -d ${destDir}`);
-    const destPath = (0, child_process_1.execSync)(`find ${destDir} -name '*.csv' | head -n 1`).toString().replace(/\s/g, '');
+    const destZipPath = node_path_1.default.join(destDir, node_path_1.default.basename(url));
+    (0, node_child_process_1.execSync)(`curl -o ${destZipPath} ${url}`);
+    (0, node_child_process_1.execSync)(`unzip -o ${destZipPath} -d ${destDir}`);
+    const destPath = (0, node_child_process_1.execSync)(`find ${destDir} -name '*.csv' | head -n 1`).toString().replace(/\s/g, '');
     return destPath;
 }
 /**
@@ -59,7 +59,7 @@ function cleanAddress(addressString) {
  */
 function parseBrackets(addressString) {
     const pattern = /（.+）/;
-    const m = addressString.match(pattern);
+    const m = pattern.exec(addressString);
     if (m !== null) {
         const notes = m[0].replace(/[（）「」]/g, '');
         return [
@@ -81,11 +81,9 @@ function parseAddress(addressString) {
         }
         return !/[、〜・]/.test(content);
     };
-    const isMultipleAddress = (content) => {
-        return !/[（）]/.test(content) && /[、〜]/.test(content);
-    };
+    const isMultipleAddress = (content) => !/[（）]/.test(content) && /[、〜]/.test(content);
     const address = cleanAddress(addressString);
-    const m = address.match(/(.+)（(.+?)）/);
+    const m = /(.+)（(.+?)）/.exec(address);
     if (m !== null) {
         const [, prefix, content] = m;
         if (isMultipleAddress(prefix)) {
@@ -125,7 +123,7 @@ function parse(csvString) {
     const rows = csvString.split('\n').filter((row) => row !== '');
     const data = [];
     rows.forEach((row) => {
-        /* eslint-disable @typescript-eslint/no-unused-vars */
+        /* eslint-disable @typescript-eslint/no-unused-vars -- CSV列のうち使用しない変数を分割代入で無視 */
         const [, , zipcode, prefKana, cityKana, addressKana, pref, city, address, isAddressDuplicated, , , isZipcodeDupulicated, isUpdated, updatedReason] = row.replace(/"/g, '').split(',');
         /* eslint-enable @typescript-eslint/no-unused-vars */
         const parsedAddress = parseAddress(address);
@@ -136,7 +134,7 @@ function parse(csvString) {
         data.push({
             zipcode,
             pref,
-            components: components.filter(value => value),
+            components: components.filter(value => value !== ''),
             address: components.slice(1).join(''),
             notes: parsedAddress.notes
         });
@@ -180,11 +178,7 @@ function findByZipcode(zipcodeString, data) {
 function similaritySort(kneedle, data) {
     const result = [...data];
     const kneedleSet = new Set(kneedle);
-    const getSimilarity = (value) => {
-        return Array.from(value).reduce((a, c) => {
-            return kneedleSet.has(c) ? a + 1 : a;
-        }, 0);
-    };
+    const getSimilarity = (value) => Array.from(value).reduce((a, c) => kneedleSet.has(c) ? a + 1 : a, 0);
     result.sort((a, b) => {
         const aValue = `${a.pref}${a.address}`;
         const bValue = `${b.pref}${b.address}`;
@@ -234,9 +228,7 @@ function findByComponents(components, data, isOr = false) {
     return data.filter(it => {
         const itsAddress = `${it.pref}${it.address}`;
         if (components.length > 1) {
-            return components[method]((component) => {
-                return itsAddress.includes(component);
-            });
+            return components[method]((component) => itsAddress.includes(component));
         }
         return itsAddress.includes(components[0]);
     });

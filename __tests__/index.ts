@@ -1,6 +1,6 @@
 import { cleanAddress, download, find, findByAddress, findByComponents, findByZipcode, parse, parseZipcode, similaritySort } from '../src';
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const DATA_DIR = path.join(__dirname, 'data');
 const CSV_PATH = path.join(DATA_DIR, 'utf_ken_all.csv');
@@ -16,12 +16,10 @@ const DATA = ((): any => {
   return parse(fs.readFileSync(CSV_PATH, 'utf-8'));
 })();
 
-const RAW_DATA = ((): any => {
-  return fs.readFileSync(CSV_PATH, 'utf-8')
+const RAW_DATA = ((): any => fs.readFileSync(CSV_PATH, 'utf-8')
     .split('\n')
     .filter(it => it)
-    .map((it: string) => (it.split(',')));
-})();
+    .map((it: string) => (it.split(','))))();
 
 function getType (obj: any): string {
   return Object.prototype.toString.call(obj).slice(8, -1);
@@ -158,7 +156,7 @@ test('Edge Case : 7900054, 7910056', () => {
   RAW_DATA
     .filter((row: string[]) => {
       const address = cleanAddress(row[8]);
-      const m = address.match(/(.+)（(.+?)）/);
+      const m = /(.+)（(.+?)）/.exec(address);
       if (m !== null) {
         return /[、〜]/.test(m[1]);
       }
@@ -166,12 +164,10 @@ test('Edge Case : 7900054, 7910056', () => {
         return /[、〜]/.test(address);
       }
       return false;
-    }).map((row: string[]) => {
-      return {
+    }).map((row: string[]) => ({
         zipcode: row[2].replace(/"/g, ''),
         street: row[8].replace(/"/g, '')
-      };
-    }).forEach((row: any) => {
+      })).forEach((row: any) => {
       const r = findByZipcode(row.zipcode, DATA) as any[];
       expect(r.some(it => it.notes === row.street)).toBe(true);
     });
@@ -181,7 +177,7 @@ test('Edge Case : 7900054, 7910056', () => {
 });
 
 // 類似度でソート
-test('sort by similarity', async () => {
+test('sort by similarity', () => {
   const SAMPLE_DATA = JSON.parse('[{"zipcode":"1140000","pref":"東京都","components":["東京都","北区"],"address":"北区"},{"zipcode":"5300000","pref":"大阪府","components":["大阪府","大阪市北区"],"address":"大阪市北区"},{"zipcode":"5300057","pref":"大阪府","components":["大阪府","大阪市北区","曽根崎"],"address":"大阪市北区曽根崎"},{"zipcode":"5300002","pref":"大阪府","components":["大阪府","大阪市北区","曽根崎新地"],"address":"大阪市北区曽根崎新地"}]');
   const r = similaritySort('大阪府大阪市北区曽根崎', SAMPLE_DATA);
   expect(r[0].zipcode).toBe('5300057');
@@ -205,21 +201,15 @@ test('BugFix: empty component', () => {
 // Edge Case : 括弧書きで読みがなや別名などが記載されている場合があるので、それを notes に逃がす
 test('Edge Case : 4740057', () => {
   // 対象の住所のリスト
-  const target = RAW_DATA.filter((row: string[]) => {
-    return /（[ア-ン]+?）/.test(row[8]);
-  }).map((row: string[]) => {
-    return [
+  const target = RAW_DATA.filter((row: string[]) => /（[ア-ン]+?）/.test(row[8])).map((row: string[]) => [
       row[2].replace(/"/g, ''),
       row[8].replace(/"/g, '')
-    ];
-  });
+    ]);
 
   // 住所がカタカナで終わってなければOKとする
   const result = target.filter((row: string[]) => {
     const res = (findByZipcode(row[0], DATA) as any[])
-      .filter((it: any) => {
-        return /[ア-ン]+$/.test(it.address);
-      });
+      .filter((it: any) => /[ア-ン]+$/.test(it.address));
     return res.length > 0;
   });
 
