@@ -1,8 +1,6 @@
-import { execSync } from 'child_process';
-import path from 'path';
-// const UTF_ALL_URL = 'https://www.post.japanpost.jp/zipcode/utf_all.csv';
-// const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_all.zip';
-const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_ken_all.zip';
+import { execSync } from 'node:child_process';
+import path from 'node:path';
+const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/service/search/zipcode/download/utf/zip/utf_ken_all.zip';
 const ZEN_NUM_MAP = '０１２３４５６７８９';
 /**
  * ファイルをダウンロードしてパスを返す
@@ -47,7 +45,7 @@ export function cleanAddress(addressString) {
  */
 function parseBrackets(addressString) {
     const pattern = /（.+）/;
-    const m = addressString.match(pattern);
+    const m = pattern.exec(addressString);
     if (m !== null) {
         const notes = m[0].replace(/[（）「」]/g, '');
         return [
@@ -69,11 +67,9 @@ function parseAddress(addressString) {
         }
         return !/[、〜・]/.test(content);
     };
-    const isMultipleAddress = (content) => {
-        return !/[（）]/.test(content) && /[、〜]/.test(content);
-    };
+    const isMultipleAddress = (content) => !/[（）]/.test(content) && /[、〜]/.test(content);
     const address = cleanAddress(addressString);
-    const m = address.match(/(.+)（(.+?)）/);
+    const m = /(.+)（(.+?)）/.exec(address);
     if (m !== null) {
         const [, prefix, content] = m;
         if (isMultipleAddress(prefix)) {
@@ -113,7 +109,7 @@ export function parse(csvString) {
     const rows = csvString.split('\n').filter((row) => row !== '');
     const data = [];
     rows.forEach((row) => {
-        /* eslint-disable @typescript-eslint/no-unused-vars */
+        /* eslint-disable @typescript-eslint/no-unused-vars -- CSV列のうち使用しない変数を分割代入で無視 */
         const [, , zipcode, prefKana, cityKana, addressKana, pref, city, address, isAddressDuplicated, , , isZipcodeDupulicated, isUpdated, updatedReason] = row.replace(/"/g, '').split(',');
         /* eslint-enable @typescript-eslint/no-unused-vars */
         const parsedAddress = parseAddress(address);
@@ -124,7 +120,7 @@ export function parse(csvString) {
         data.push({
             zipcode,
             pref,
-            components: components.filter(value => value),
+            components: components.filter(value => value !== ''),
             address: components.slice(1).join(''),
             notes: parsedAddress.notes
         });
@@ -168,11 +164,7 @@ export function findByZipcode(zipcodeString, data) {
 export function similaritySort(kneedle, data) {
     const result = [...data];
     const kneedleSet = new Set(kneedle);
-    const getSimilarity = (value) => {
-        return Array.from(value).reduce((a, c) => {
-            return kneedleSet.has(c) ? a + 1 : a;
-        }, 0);
-    };
+    const getSimilarity = (value) => Array.from(value).reduce((a, c) => kneedleSet.has(c) ? a + 1 : a, 0);
     result.sort((a, b) => {
         const aValue = `${a.pref}${a.address}`;
         const bValue = `${b.pref}${b.address}`;
@@ -222,9 +214,7 @@ export function findByComponents(components, data, isOr = false) {
     return data.filter(it => {
         const itsAddress = `${it.pref}${it.address}`;
         if (components.length > 1) {
-            return components[method]((component) => {
-                return itsAddress.includes(component);
-            });
+            return components[method]((component) => itsAddress.includes(component));
         }
         return itsAddress.includes(components[0]);
     });

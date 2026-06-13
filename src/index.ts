@@ -1,9 +1,7 @@
-import { execSync } from 'child_process';
-import path from 'path';
+import { execSync } from 'node:child_process';
+import path from 'node:path';
 
-// const UTF_ALL_URL = 'https://www.post.japanpost.jp/zipcode/utf_all.csv';
-// const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_all.zip';
-const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_ken_all.zip';
+const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/service/search/zipcode/download/utf/zip/utf_ken_all.zip';
 const ZEN_NUM_MAP = '０１２３４５６７８９';
 
 /**
@@ -12,7 +10,7 @@ const ZEN_NUM_MAP = '０１２３４５６７８９';
  * @param {string} url
  * @returns {string}
  */
-export function download (destDir: string = './', url: string = UTF_ALL_ZIP_URL): string {
+export function download (destDir = './', url: string = UTF_ALL_ZIP_URL): string {
   const destZipPath = path.join(destDir, path.basename(url));
   execSync(`curl -o ${destZipPath} ${url}`);
   execSync(`unzip -o ${destZipPath} -d ${destDir}`);
@@ -62,7 +60,7 @@ export function cleanAddress (addressString: string): string {
  */
 function parseBrackets (addressString: string): [string, string?] {
   const pattern = /（.+）/;
-  const m = addressString.match(pattern);
+  const m = pattern.exec(addressString);
   if (m !== null) {
     const notes = m[0].replace(/[（）「」]/g, '');
     return [
@@ -86,12 +84,10 @@ function parseAddress (addressString: string): { address?: string, notes?: strin
     return !/[、〜・]/.test(content);
   };
 
-  const isMultipleAddress = (content: string): boolean => {
-    return !/[（）]/.test(content) && /[、〜]/.test(content);
-  };
+  const isMultipleAddress = (content: string): boolean => !/[（）]/.test(content) && /[、〜]/.test(content);
 
   const address = cleanAddress(addressString);
-  const m = address.match(/(.+)（(.+?)）/);
+  const m = /(.+)（(.+?)）/.exec(address);
 
   if (m !== null) {
     const [, prefix, content] = m;
@@ -133,7 +129,7 @@ export function parse (csvString: string): AddressItem[] {
   const data: AddressItem[] = [];
 
   rows.forEach((row) => {
-    /* eslint-disable @typescript-eslint/no-unused-vars */
+    /* eslint-disable @typescript-eslint/no-unused-vars -- CSV列のうち使用しない変数を分割代入で無視 */
     const [
       ,,zipcode, prefKana, cityKana, addressKana,
       pref, city, address,
@@ -148,7 +144,7 @@ export function parse (csvString: string): AddressItem[] {
     data.push({
       zipcode,
       pref,
-      components: components.filter(value => value),
+      components: components.filter(value => value !== ''),
       address: components.slice(1).join(''),
       notes: parsedAddress.notes
     });
@@ -196,11 +192,7 @@ export function findByZipcode (zipcodeString: string, data: AddressItem[]): Addr
 export function similaritySort (kneedle: string, data: AddressItem[]): AddressItem[] {
   const result = [...data];
   const kneedleSet = new Set<string>(kneedle);
-  const getSimilarity = (value: string): number => {
-    return Array.from(value).reduce((a, c) => {
-      return kneedleSet.has(c) ? a + 1 : a;
-    }, 0);
-  };
+  const getSimilarity = (value: string): number => Array.from(value).reduce((a, c) => kneedleSet.has(c) ? a + 1 : a, 0);
 
   result.sort((a, b) => {
     const aValue = `${a.pref}${a.address}`;
@@ -224,7 +216,7 @@ export function similaritySort (kneedle: string, data: AddressItem[]): AddressIt
  * @param {boolean} [sort]
  * @returns {AddressItem[] | Error}
  */
-export function findByAddress (address: string, data: AddressItem[], sort: boolean = true): AddressItem[] | Error {
+export function findByAddress (address: string, data: AddressItem[], sort = true): AddressItem[] | Error {
   if (address.length === 0) {
     return new Error('Invalid Address');
   }
@@ -245,7 +237,7 @@ export function findByAddress (address: string, data: AddressItem[], sort: boole
  * @param {boolean} isOr
  * @returns {AddressItem[] | Error}
  */
-export function findByComponents (components: string[], data: AddressItem[], isOr: boolean = false): AddressItem[] | Error {
+export function findByComponents (components: string[], data: AddressItem[], isOr = false): AddressItem[] | Error {
   if (components.length === 0 || components.join('').length === 0) {
     return new Error('Invalid Parameter');
   }
@@ -253,9 +245,7 @@ export function findByComponents (components: string[], data: AddressItem[], isO
   return data.filter(it => {
     const itsAddress = `${it.pref}${it.address}`;
     if (components.length > 1) {
-      return components[method]((component) => {
-        return itsAddress.includes(component);
-      });
+      return components[method]((component) => itsAddress.includes(component));
     }
     return itsAddress.includes(components[0]);
   });
@@ -266,7 +256,7 @@ interface FindOptions {
   isOr?: boolean
 }
 
-function getType (obj: any): string {
+function getType (obj: unknown): string {
   return Object.prototype.toString.call(obj).slice(8, -1);
 }
 
@@ -287,7 +277,7 @@ export function find (query: string | string[], data: AddressItem[], options: Fi
 
   // components ?
   if (getType(value) === 'Array') {
-    if ((value as any[]).every(it => (getType(it) === 'String'))) {
+    if ((value as unknown[]).every(it => (getType(it) === 'String'))) {
       return findByComponents(value as string[], data, options.isOr);
     }
     return new Error('Invalid Array');
