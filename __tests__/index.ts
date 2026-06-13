@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 const DATA_DIR = path.join(__dirname, 'data');
-const CSV_PATH = path.join(DATA_DIR, 'utf_ken_all/utf_ken_all.csv');
+const CSV_PATH = path.join(DATA_DIR, 'utf_ken_all.csv');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR);
