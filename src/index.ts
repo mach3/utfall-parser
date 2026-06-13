@@ -1,9 +1,7 @@
 import { execSync } from 'child_process';
 import path from 'path';
 
-// const UTF_ALL_URL = 'https://www.post.japanpost.jp/zipcode/utf_all.csv';
-// const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_all.zip';
-const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_ken_all.zip';
+const UTF_ALL_ZIP_URL = 'https://www.post.japanpost.jp/service/search/zipcode/download/utf/zip/utf_ken_all.zip';
 const ZEN_NUM_MAP = '０１２３４５６７８９';
 
 /**
